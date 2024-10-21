@@ -1,0 +1,149 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+
+public class ProvaTecnicaFullStack {
+
+    // Classe para armazenar informações dos candidatos
+    static class Candidato {
+        String nome;
+        int idade;
+        String vaga;
+        String estado;
+
+        public Candidato(String nome, int idade, String vaga, String estado) {
+            this.nome = nome;
+            this.idade = idade;
+            this.vaga = vaga;
+            this.estado = estado;
+        }
+
+        @Override
+        public String toString() {
+            return nome + ";" + idade + ";" + vaga + ";" + estado;
+        }
+    }
+
+    public static void main(String[] args) {
+        String arquivo = "Academy_Candidates.txt";
+        ArrayList<Candidato> candidatos = new ArrayList<>();
+        HashSet<String> estados = new HashSet<>();
+
+        // Contadores e somadores para cada vaga
+        int contadorWeb = 0, contadorMobile = 0, contadorQA = 0;
+        int somaIdadesWeb = 0, somaIdadesMobile = 0, somaIdadesQA = 0;
+        int idadeMaxWeb = 0, idadeMaxMobile = 0, idadeMaxQA = 0;
+        int idadeMinWeb = Integer.MAX_VALUE, idadeMinMobile = Integer.MAX_VALUE, idadeMinQA = Integer.MAX_VALUE;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(arquivo))) {
+            String linha;
+            boolean isFirstLine = true; // Para ignorar a primeira linha (cabeçalho)
+
+            // Ler cada linha do arquivo
+            while ((linha = br.readLine()) != null) {
+                // Ignora a linha do cabeçalho
+                if (isFirstLine) {
+                    isFirstLine = false; // Ignora a primeira linha
+                    continue;
+                }
+
+                // Verifica se a linha não está vazia
+                if (linha.trim().isEmpty()) {
+                    continue; // Ignora linhas vazias
+                }
+
+                String[] dados = linha.split(";");
+                String nomeCompleto = dados[0];
+
+                // Aqui, removemos " anos" da string da idade
+                String idadeTexto = dados[1].trim().replace(" anos", ""); // Remove " anos"
+                int idade = Integer.parseInt(idadeTexto); // Converte para inteiro
+
+                String vaga = dados[2];
+                String estado = dados[3];
+
+                // Adicionar o estado ao conjunto de estados distintos
+                estados.add(estado);
+
+                // Criar objeto candidato e adicioná-lo à lista
+                Candidato candidato = new Candidato(nomeCompleto, idade, vaga, estado);
+                candidatos.add(candidato);
+
+                // Processar por vaga
+                switch (vaga) {
+                    case "Web":
+                        contadorWeb++;
+                        somaIdadesWeb += idade;
+                        if (idade > idadeMaxWeb) idadeMaxWeb = idade;
+                        if (idade < idadeMinWeb) idadeMinWeb = idade;
+                        break;
+                    case "Mobile":
+                        contadorMobile++;
+                        somaIdadesMobile += idade;
+                        if (idade > idadeMaxMobile) idadeMaxMobile = idade;
+                        if (idade < idadeMinMobile) idadeMinMobile = idade;
+                        break;
+                    case "QA":
+                        contadorQA++;
+                        somaIdadesQA += idade;
+                        if (idade > idadeMaxQA) idadeMaxQA = idade;
+                        if (idade < idadeMinQA) idadeMinQA = idade;
+                        break;
+                }
+            }
+
+            int totalCandidatos = contadorWeb + contadorMobile + contadorQA;
+
+            // Calcular porcentagem
+            double porcentagemWeb = (contadorWeb * 100.0) / totalCandidatos;
+            double porcentagemMobile = (contadorMobile * 100.0) / totalCandidatos;
+            double porcentagemQA = (contadorQA * 100.0) / totalCandidatos;
+
+            // Exibir resultados
+            System.out.println("\nProporção de candidatos por vaga:\n");
+            System.out.printf("Web: %.2f%%\n", porcentagemWeb);
+            System.out.printf("Mobile: %.2f%%\n", porcentagemMobile);
+            System.out.printf("QA: %.2f%%\n", porcentagemQA);
+
+            System.out.println("\nIdade média dos candidatos de cada vaga:");
+            System.out.printf("Web: %.2f anos\n", contadorWeb > 0 ? (somaIdadesWeb * 1.0) / contadorWeb : 0);
+            System.out.printf("Mobile: %.2f anos\n", contadorMobile > 0 ? (somaIdadesMobile * 1.0) / contadorMobile : 0);
+            System.out.printf("QA: %.2f anos\n", contadorQA > 0 ? (somaIdadesQA * 1.0) / contadorQA : 0);
+
+            System.out.println("\nIdades dos candidatos mais velhos em cada vaga:");
+            System.out.println("Web: " + (contadorWeb > 0 ? idadeMaxWeb : "N/A"));
+            System.out.println("Mobile: " + (contadorMobile > 0 ? idadeMaxMobile : "N/A"));
+            System.out.println("QA: " + (contadorQA > 0 ? idadeMaxQA : "N/A"));
+
+            System.out.println("\nIdades dos candidatos mais novos em cada vaga:");
+            System.out.println("Web: " + (contadorWeb > 0 ? idadeMinWeb : "N/A"));
+            System.out.println("Mobile: " + (contadorMobile > 0 ? idadeMinMobile : "N/A"));
+            System.out.println("QA: " + (contadorQA > 0 ? idadeMinQA : "N/A"));
+
+            System.out.println("\nNúmero de estados distintos:");
+            System.out.println(estados.size());
+
+            // Ordenar a lista de candidatos por idade
+            Collections.sort(candidatos, Comparator.comparingInt(c -> c.idade));
+
+            // Criar arquivo CSV com candidatos organizados por idade
+            try (FileWriter writer = new FileWriter("Sorted_Academy_Candidates.csv")) {
+                writer.write("Nome;Idade;Vaga;Estado\n");
+                for (Candidato candidato : candidatos) {
+                    writer.write(candidato.toString() + "\n");
+                }
+                System.out.println("\nSEu aorquivo 'Sorted_Academy_Candidates.csv' foi criado com sucesso :)");
+            } catch (IOException e) {
+                System.out.println("Erro ao escrever no arquivo: " + e.getMessage());
+            }
+
+        } catch (IOException e) {
+            System.out.println("Erro ao ler o arquivo: " + e.getMessage());
+        }
+    }
+}
